@@ -83,8 +83,13 @@ document.addEventListener('DOMContentLoaded', () => {
         aiResponseBox.innerHTML = '<span style="color: #888;">AI가 일기를 분석하고 있습니다... ✨</span>';
         
         try {
-            // Vercel 환경에 최적화되도록 상대 경로를 사용합니다. (배포된 도메인을 자동 인식)
-            const response = await fetch('/api/analyze', {
+            // 로컬 파일(file://)로 열었을 경우 로컬 테스트 서버(localhost:3000)를 바라보게 하고,
+            // Vercel 환경일 경우 상대 경로(/api/analyze)를 사용하도록 동적 처리합니다.
+            const apiUrl = window.location.protocol === 'file:' 
+                ? 'http://localhost:3000/api/analyze' 
+                : '/api/analyze';
+
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="나만의 AI 감정 일기장">
+    <title>AI 감정 일기</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Google Fonts: Nanum Pen Script & Gowun Dodum -->
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+</head>
+<body>
+    <main class="container">
+        <h1>오늘의 하루는 어땠나요?</h1>
+        
+        <label for="diary-input" class="sr-only">일기 입력</label>
+        <textarea id="diary-input" placeholder="오늘 있었던 일이나 느꼈던 감정을 자유롭게 적어주세요..."></textarea>
+        
+        <div class="button-group">
+            <button class="btn btn-voice" id="btn-voice">
+                <span class="icon">🎙️</span> 음성으로 입력
+            </button>
+            <button class="btn btn-analyze" id="btn-analyze">
+                <span class="icon">✨</span> 분석 요청하기
+            </button>
+        </div>
+
+        <section class="ai-response-section">
+            <h2>AI의 답변</h2>
+            <div class="ai-box" id="ai-response-box">
+                여기에 AI 의 답변이 표시됩니다.
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

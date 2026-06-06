@@ -114,6 +114,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save to local storage
             localStorage.setItem('savedDiary', content);
             localStorage.setItem('savedAiResponse', formattedText);
+            
+            // 새 일기 작성 후 히스토리 갱신
+            fetchHistory();
         } catch (error) {
             console.error('Error:', error);
             aiResponseBox.innerHTML = '<span style="color: #d9534f;">분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요. 😢</span>';
@@ -121,4 +124,53 @@ document.addEventListener('DOMContentLoaded', () => {
             btnAnalyze.disabled = false;
         }
     });
+
+    async function fetchHistory() {
+        const historyContainer = document.getElementById('history-container');
+        if (!historyContainer) return;
+        
+        try {
+            const apiUrl = window.location.protocol === 'file:' 
+                ? 'http://localhost:3000/api/history' 
+                : '/api/history';
+
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error('히스토리 불러오기 실패');
+            
+            const data = await response.json();
+            
+            if (!data.history || data.history.length === 0) {
+                historyContainer.innerHTML = '<p style="text-align:center; color:#888;">아직 작성된 일기 히스토리가 없습니다.</p>';
+                return;
+            }
+
+            historyContainer.innerHTML = ''; // Clear container
+
+            data.history.forEach(item => {
+                const dateObj = new Date(item.timestamp);
+                const dateStr = dateObj.toLocaleString('ko-KR', { 
+                    year: 'numeric', month: 'long', day: 'numeric', 
+                    hour: '2-digit', minute: '2-digit' 
+                });
+
+                const formattedText = item.originalText ? item.originalText.replace(/\n/g, '<br>') : '';
+                const formattedAi = item.aiResponse ? item.aiResponse.replace(/\n/g, '<br>') : '';
+
+                const card = document.createElement('div');
+                card.className = 'history-card';
+                card.innerHTML = `
+                    <div class="history-date">${dateStr}</div>
+                    <div class="history-text">${formattedText}</div>
+                    <div class="history-ai"><strong>AI:</strong><br>${formattedAi}</div>
+                `;
+                historyContainer.appendChild(card);
+            });
+        } catch (error) {
+            console.error('History Fetch Error:', error);
+            historyContainer.innerHTML = '<p style="text-align:center; color:#d9534f;">히스토리를 불러오지 못했습니다.</p>';
+        }
+    }
+
+    // 페이지 로딩 시 히스토리 가져오기
+    fetchHistory();
 });

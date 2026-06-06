@@ -22,6 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 supabaseClient.auth.onAuthStateChange((event, session) => {
                     currentSession = session;
                     if (session) {
+                        // 로그인 된 사용자의 이메일을 상단에 표시
+                        const emailDisplay = document.getElementById('user-email-display');
+                        if (emailDisplay) emailDisplay.textContent = session.user.email;
+                        
                         document.getElementById('login-container').style.display = 'none';
                         document.getElementById('app-container').style.display = 'block';
                         fetchHistory();

@@ -1,6 +1,8 @@
-const Redis = require('ioredis');
+const { createClient } = require('@supabase/supabase-js');
 
-const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 module.exports = async function handler(req, res) {
     // CORS 설정
@@ -14,28 +16,29 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'GET') {
         try {
-            if (!redis) {
-                return res.status(500).json({ error: 'REDIS_URL 환경 변수가 설정되지 않았습니다.' });
+            if (!supabase) {
+                return res.status(500).json({ error: 'Supabase 환경 변수가 설정되지 않았습니다.' });
             }
 
-            // 모든 다이어리 키 조회
-            const keys = await redis.keys('diary-*');
+            // Supabase에서 데이터 조회 (최신순)
+            const { data, error } = await supabase
+                .from('diaries')
+                .select('*')
+                .order('created_at', { ascending: false });
             
-            if (keys.length === 0) {
-                return res.status(200).json({ history: [] });
-            }
+            if (error) throw error;
 
-            // 모든 키의 값을 가져오기
-            const values = await redis.mget(keys);
-            
-            const history = values.map(val => JSON.parse(val));
-            
-            // 최신순(timestamp 내림차순)으로 정렬
-            history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            // 프론트엔드가 기존에 기대하는 포맷으로 매핑 (originalText, aiResponse, timestamp)
+            const history = data.map(item => ({
+                id: item.id,
+                timestamp: item.created_at,
+                originalText: item.original_text,
+                aiResponse: item.ai_response
+            }));
 
             return res.status(200).json({ history });
         } catch (error) {
-            console.error('Redis History Error:', error);
+            console.error('Supabase History Error:', error);
             return res.status(500).json({ error: '히스토리를 불러오는 중 오류가 발생했습니다.' });
         }
     } else {

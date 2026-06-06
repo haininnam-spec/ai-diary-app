@@ -1,20 +1,10 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const Redis = require('ioredis');
+const { createClient } = require('@supabase/supabase-js');
 
-// Redis 클라이언트 초기화. Vercel 환경 변수 REDIS_URL 사용.
-// 서버리스 환경에서는 매 요청마다 연결을 만들거나 기존 연결을 재사용합니다.
-const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
-
-// 날짜 포맷 함수 (YYYYMMDDHHMM)
-function getFormattedDate() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${year}${month}${day}${hours}${minutes}`;
-}
+// Supabase 클라이언트 초기화
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 module.exports = async function handler(req, res) {
     // CORS 설정 추가 (로컬 테스트나 다른 도메인 호출 방지)
@@ -45,26 +35,25 @@ module.exports = async function handler(req, res) {
             const response = await result.response;
             const aiText = response.text();
 
-            // Redis에 저장 로직 추가
-            if (redis) {
+            // Supabase에 저장 로직 추가
+            if (supabase) {
                 try {
-                    const diaryId = `diary-${getFormattedDate()}`;
-                    const payload = {
-                        id: diaryId,
-                        timestamp: new Date().toISOString(),
-                        originalText: text,
-                        aiResponse: aiText
-                    };
+                    const { error } = await supabase
+                        .from('diaries')
+                        .insert([
+                            {
+                                original_text: text,
+                                ai_response: aiText
+                            }
+                        ]);
                     
-                    // JSON 형태로 Redis에 저장
-                    await redis.set(diaryId, JSON.stringify(payload));
-                    console.log(`Successfully saved to Redis with key: ${diaryId}`);
-                } catch (redisError) {
-                    console.error('Redis Save Error:', redisError);
-                    // Redis 저장이 실패하더라도 사용자에게 결과는 반환하기 위해 throw하지 않음
+                    if (error) throw error;
+                    console.log('Successfully saved to Supabase');
+                } catch (dbError) {
+                    console.error('Supabase Save Error:', dbError);
                 }
             } else {
-                console.warn('REDIS_URL 환경 변수가 설정되지 않아 저장되지 않았습니다.');
+                console.warn('SUPABASE 환경 변수가 설정되지 않아 저장되지 않았습니다.');
             }
 
             // 결과 반환

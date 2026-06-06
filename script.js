@@ -4,17 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const diaryInput = document.getElementById('diary-input');
     const aiResponseBox = document.getElementById('ai-response-box');
 
-    // Load from local storage on page load
-    const savedDiary = localStorage.getItem('savedDiary');
-    const savedAiResponse = localStorage.getItem('savedAiResponse');
-    
-    if (savedDiary) {
-        diaryInput.value = savedDiary;
-    }
-    if (savedAiResponse) {
-        aiResponseBox.innerHTML = savedAiResponse;
-    }
-
     let recognition;
     let isRecognizing = false;
     let originalText = '';
@@ -111,9 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const formattedText = data.result.replace(/\n/g, '<br>');
             aiResponseBox.innerHTML = formattedText;
 
-            // Save to local storage
-            localStorage.setItem('savedDiary', content);
-            localStorage.setItem('savedAiResponse', formattedText);
+            // 분석 완료 후 입력창 초기화
+            diaryInput.value = '';
             
             // 새 일기 작성 후 히스토리 갱신
             fetchHistory();

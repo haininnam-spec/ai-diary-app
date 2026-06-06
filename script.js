@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const { error } = await supabaseClient.auth.signUp({ email, password });
         if (error) alert('회원가입 실패: ' + error.message);
-        else alert('회원가입 요청이 전송되었습니다! (이메일 인증이 필요할 수 있습니다)');
+        else alert('가입 확인 이메일을 확인해 주세요');
     });
 
     document.getElementById('btn-google-login').addEventListener('click', async () => {

@@ -25,6 +25,13 @@ module.exports = async function handler(req, res) {
                 return res.status(400).json({ error: '일기 내용이 없습니다.' });
             }
 
+            // JWT 토큰 검증
+            const token = req.headers.authorization?.split(' ')[1];
+            if (!token) return res.status(401).json({ error: '로그인이 필요합니다.' });
+            
+            const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+            if (authError || !user) return res.status(401).json({ error: '유효하지 않은 인증입니다.' });
+
             // Gemini API 호출 설정
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
             const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
@@ -43,7 +50,8 @@ module.exports = async function handler(req, res) {
                         .insert([
                             {
                                 original_text: text,
-                                ai_response: aiText
+                                ai_response: aiText,
+                                user_id: user.id
                             }
                         ]);
                     

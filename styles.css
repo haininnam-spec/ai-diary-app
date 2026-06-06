@@ -264,6 +264,109 @@ textarea::placeholder {
     border-radius: 8px;
 }
 
+/* Login UI Styles */
+.login-subtitle {
+    text-align: center;
+    color: #4a5c39;
+    margin-bottom: 30px;
+    font-size: 1.2rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 15px;
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: 1.1rem;
+    border: 2px solid rgba(141, 164, 126, 0.3);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.85);
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.auth-form input:focus {
+    border-color: var(--btn-primary);
+    box-shadow: 0 0 0 4px rgba(122, 145, 107, 0.15);
+}
+
+.auth-buttons {
+    margin-top: 10px;
+}
+
+.btn-primary {
+    background-color: var(--btn-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--btn-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+}
+
+.btn-google {
+    background-color: white;
+    color: #333;
+    border: 1px solid #ddd;
+    font-family: 'Gowun Dodum', sans-serif; /* Override cursive for google */
+    font-size: 1.2rem;
+    padding: 12px;
+}
+
+.btn-google:hover {
+    background-color: #f1f1f1;
+    transform: translateY(-2px);
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #888;
+    margin: 10px 0;
+}
+
+.divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #ccc;
+}
+
+.divider span {
+    padding: 0 10px;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.header-row h1 {
+    margin-bottom: 0;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: #888;
+    text-decoration: underline;
+    cursor: pointer;
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: 1rem;
+    padding: 5px;
+}
+.btn-text:hover {
+    color: #333;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }

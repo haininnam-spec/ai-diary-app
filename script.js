@@ -4,6 +4,67 @@ document.addEventListener('DOMContentLoaded', () => {
     const diaryInput = document.getElementById('diary-input');
     const aiResponseBox = document.getElementById('ai-response-box');
 
+    let supabaseClient;
+    let currentSession = null;
+
+    // Initialize Auth
+    initAuth();
+
+    async function initAuth() {
+        try {
+            const baseUrl = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
+            const res = await fetch(`${baseUrl}/api/config`);
+            const config = await res.json();
+            
+            if (config.supabaseUrl && config.supabaseAnonKey) {
+                supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+                
+                supabaseClient.auth.onAuthStateChange((event, session) => {
+                    currentSession = session;
+                    if (session) {
+                        document.getElementById('login-container').style.display = 'none';
+                        document.getElementById('app-container').style.display = 'block';
+                        fetchHistory();
+                    } else {
+                        document.getElementById('login-container').style.display = 'block';
+                        document.getElementById('app-container').style.display = 'none';
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Failed to initialize Auth", e);
+        }
+    }
+
+    // Auth Button Listeners
+    document.getElementById('btn-login').addEventListener('click', async () => {
+        const email = document.getElementById('email-input').value;
+        const password = document.getElementById('password-input').value;
+        if(!email || !password) return alert('이메일과 비밀번호를 입력해주세요.');
+        
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) alert('로그인 실패: ' + error.message);
+    });
+
+    document.getElementById('btn-signup').addEventListener('click', async () => {
+        const email = document.getElementById('email-input').value;
+        const password = document.getElementById('password-input').value;
+        if(!email || !password) return alert('이메일과 비밀번호를 입력해주세요.');
+        
+        const { error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) alert('회원가입 실패: ' + error.message);
+        else alert('회원가입 요청이 전송되었습니다! (이메일 인증이 필요할 수 있습니다)');
+    });
+
+    document.getElementById('btn-google-login').addEventListener('click', async () => {
+        const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google' });
+        if (error) alert('구글 로그인 실패: ' + error.message);
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+        await supabaseClient.auth.signOut();
+    });
+
     let recognition;
     let isRecognizing = false;
     let originalText = '';
@@ -82,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': currentSession ? `Bearer ${currentSession.access_token}` : ''
                 },
                 body: JSON.stringify({ text: content })
             });
@@ -122,7 +184,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? 'http://localhost:3000/api/history' 
                 : '/api/history';
 
-            const response = await fetch(apiUrl);
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'Authorization': currentSession ? `Bearer ${currentSession.access_token}` : ''
+                }
+            });
             if (!response.ok) throw new Error('히스토리 불러오기 실패');
             
             const data = await response.json();
@@ -159,6 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 페이지 로딩 시 히스토리 가져오기
-    fetchHistory();
+    // 페이지 로딩 시 히스토리 가져오기 (Auth 리스너에서 호출되므로 여기서 제거)
+    // fetchHistory();
 });

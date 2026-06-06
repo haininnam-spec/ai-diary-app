@@ -10,8 +10,36 @@
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 </head>
 <body>
-    <main class="container">
-        <h1>오늘의 하루는 어땠나요?</h1>
+    <!-- 로그인 화면 -->
+    <main class="container" id="login-container">
+        <h1>AI 감정 일기</h1>
+        <p class="login-subtitle">오늘의 감정을 기록하고 위로를 받아보세요</p>
+        
+        <div class="auth-form">
+            <input type="email" id="email-input" placeholder="이메일 주소" required>
+            <input type="password" id="password-input" placeholder="비밀번호" required>
+            
+            <div class="button-group auth-buttons">
+                <button class="btn btn-primary" id="btn-login">로그인</button>
+                <button class="btn btn-secondary" id="btn-signup">회원가입</button>
+            </div>
+            
+            <div class="divider">
+                <span>또는</span>
+            </div>
+            
+            <button class="btn btn-google" id="btn-google-login">
+                <span class="icon">G</span> Google로 로그인
+            </button>
+        </div>
+    </main>
+
+    <!-- 메인 일기장 화면 (기본 숨김) -->
+    <main class="container" id="app-container" style="display: none;">
+        <div class="header-row">
+            <h1>오늘의 하루는 어땠나요?</h1>
+            <button class="btn-text" id="btn-logout">로그아웃</button>
+        </div>
         
         <label for="diary-input" class="sr-only">일기 입력</label>
         <textarea id="diary-input" placeholder="오늘 있었던 일이나 느꼈던 감정을 자유롭게 적어주세요..."></textarea>
@@ -40,6 +68,8 @@
         </section>
     </main>
 
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 </body>
 </html>

@@ -20,10 +20,18 @@ module.exports = async function handler(req, res) {
                 return res.status(500).json({ error: 'Supabase 환경 변수가 설정되지 않았습니다.' });
             }
 
-            // Supabase에서 데이터 조회 (최신순)
+            // JWT 토큰 검증
+            const token = req.headers.authorization?.split(' ')[1];
+            if (!token) return res.status(401).json({ error: '로그인이 필요합니다.' });
+            
+            const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+            if (authError || !user) return res.status(401).json({ error: '유효하지 않은 인증입니다.' });
+
+            // Supabase에서 데이터 조회 (최신순, 해당 사용자의 일기만)
             const { data, error } = await supabase
                 .from('diaries')
                 .select('*')
+                .eq('user_id', user.id)
                 .order('created_at', { ascending: false });
             
             if (error) throw error;

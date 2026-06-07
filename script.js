@@ -254,9 +254,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = document.createElement('div');
         div.className = `chat-message ${isMe ? 'me' : 'other'}`;
         
-        // 익명 처리 (이메일 앞자리 활용)
-        const emailPrefix = msg.user_email ? msg.user_email.split('@')[0] : '익명';
-        const senderHtml = isMe ? '' : `<span class="sender">${emailPrefix}</span>`;
+        // 익명 처리 대신 전체 이메일 표시 (요청사항 반영)
+        const emailText = msg.user_email ? msg.user_email : '익명';
+        const senderHtml = isMe ? '' : `<span class="sender">${emailText}</span>`;
         
         div.innerHTML = `${senderHtml}${msg.content}`;
         
@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadChatHistory() {
         if (!supabaseClient) return;
         const { data, error } = await supabaseClient
-            .from('messages')
+            .from('message')
             .select('*')
             .order('created_at', { ascending: false })
             .limit(20);
@@ -294,8 +294,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 이전 구독이 있다면 취소
         if (chatSubscription) supabaseClient.removeChannel(chatSubscription);
 
-        chatSubscription = supabaseClient.channel('public:messages')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+        chatSubscription = supabaseClient.channel('message')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message' }, payload => {
                 renderChatMessage(payload.new);
             })
             .subscribe();
@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.value = '';
         
         const { error } = await supabaseClient
-            .from('messages')
+            .from('message')
             .insert([{
                 content: text,
                 user_email: currentSession.user.email

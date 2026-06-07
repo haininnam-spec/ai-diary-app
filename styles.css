@@ -543,11 +543,33 @@ textarea::placeholder {
     box-shadow: 0 0 0 3px rgba(122, 145, 107, 0.1);
 }
 
-.chat-input-area button {
-    padding: 0 20px;
-    border-radius: 20px;
-    font-size: 1.2rem;
-    min-width: 80px;
+.btn-icon {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--btn-primary);
+}
+
+.btn-icon:hover {
+    background-color: rgba(141, 164, 126, 0.15);
+    transform: scale(1.1);
+}
+
+.chat-attached-image {
+    max-width: 100%;
+    max-height: 250px;
+    border-radius: 12px;
+    margin-top: 5px;
+    object-fit: contain;
+    background-color: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.05);
 }
 
 /* Responsive */

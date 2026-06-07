@@ -310,6 +310,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chat-input');
     const btnChatSend = document.getElementById('btn-chat-send');
     const chatMessages = document.getElementById('chat-messages');
+    const btnChatAttach = document.getElementById('btn-chat-attach');
+    const chatImageUpload = document.getElementById('chat-image-upload');
     let chatSubscription = null;
 
     function renderChatMessage(msg, isHistory = false) {
@@ -335,7 +337,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const emailText = msg.user_email ? msg.user_email : '익명';
         const senderHtml = isMe ? '' : `<span class="sender">${emailText}</span>`;
         
-        div.innerHTML = `${senderHtml}${msg.content}`;
+        // 이미지 마크다운 파싱 처리 (예: ![image](url))
+        let contentHtml = msg.content;
+        const imgMatch = msg.content.match(/^!\[image\]\((.*?)\)$/);
+        if (imgMatch && imgMatch[1]) {
+            const imgUrl = imgMatch[1];
+            contentHtml = `<img src="${imgUrl}" class="chat-attached-image" alt="첨부 이미지" onerror="this.onerror=null; this.outerHTML='<div style=\\'padding: 10px; background: #eee; border-radius: 8px; font-size: 0.8rem; color: #888;\\'>⚠️ 이미지를 불러올 수 없습니다.</div>';">`;
+        }
+        
+        div.innerHTML = `${senderHtml}${contentHtml}`;
         
         wrapper.appendChild(img);
         wrapper.appendChild(div);
@@ -406,6 +416,56 @@ document.addEventListener('DOMContentLoaded', () => {
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendChatMessage();
     });
+    
+    // 채팅 이미지 첨부 로직
+    if (btnChatAttach && chatImageUpload) {
+        btnChatAttach.addEventListener('click', () => chatImageUpload.click());
+        
+        chatImageUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file || !supabaseClient || !currentSession) return;
+            
+            // 로딩 중 UI 표시 (간단히 투명도 조절)
+            btnChatAttach.disabled = true;
+            btnChatAttach.style.opacity = '0.5';
+            
+            // 고유한 파일명 생성 (예: 사용자ID/타임스탬프_랜덤.png)
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+            const filePath = `${currentSession.user.id}/${fileName}`;
+            
+            try {
+                // 1. chat-images 버킷에 업로드
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('chat-images')
+                    .upload(filePath, file);
+                    
+                if (uploadError) throw uploadError;
+                
+                // 2. 파일의 공개 URL 가져오기
+                const { data } = supabaseClient.storage.from('chat-images').getPublicUrl(filePath);
+                const publicUrl = data.publicUrl;
+                
+                // 3. message 테이블에 이미지 URL 형식으로 삽입
+                const { error: insertError } = await supabaseClient
+                    .from('message')
+                    .insert([{
+                        content: `![image](${publicUrl})`,
+                        user_email: currentSession.user.email
+                    }]);
+                    
+                if (insertError) throw insertError;
+                
+            } catch (err) {
+                console.error('Chat Image Upload Error:', err);
+                alert('채팅 이미지 첨부 실패: ' + err.message);
+            } finally {
+                btnChatAttach.disabled = false;
+                btnChatAttach.style.opacity = '1';
+                chatImageUpload.value = ''; // 파일 선택 초기화
+            }
+        });
+    }
     // --- 실시간 채팅 로직 끝 ---
 
 });

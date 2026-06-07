@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('login-container').style.display = 'none';
                         document.getElementById('app-container').style.display = 'block';
                         fetchHistory();
+                        setupRealtimeChat();
                     } else {
                         document.getElementById('login-container').style.display = 'block';
                         document.getElementById('app-container').style.display = 'none';
@@ -242,6 +243,90 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 페이지 로딩 시 히스토리 가져오기 (Auth 리스너에서 호출되므로 여기서 제거)
-    // fetchHistory();
+    // --- 실시간 채팅 로직 시작 ---
+    const chatInput = document.getElementById('chat-input');
+    const btnChatSend = document.getElementById('btn-chat-send');
+    const chatMessages = document.getElementById('chat-messages');
+    let chatSubscription = null;
+
+    function renderChatMessage(msg, isHistory = false) {
+        const isMe = currentSession && currentSession.user.id === msg.user_id;
+        const div = document.createElement('div');
+        div.className = `chat-message ${isMe ? 'me' : 'other'}`;
+        
+        // 익명 처리 (이메일 앞자리 활용)
+        const emailPrefix = msg.email ? msg.email.split('@')[0] : '익명';
+        const senderHtml = isMe ? '' : `<span class="sender">${emailPrefix}</span>`;
+        
+        div.innerHTML = `${senderHtml}${msg.message}`;
+        
+        if (isHistory) {
+            // 과거 메시지는 맨 앞에 추가
+            const firstChild = chatMessages.children[1]; // system message is [0]
+            if (firstChild) {
+                chatMessages.insertBefore(div, firstChild);
+            } else {
+                chatMessages.appendChild(div);
+            }
+        } else {
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+
+    async function loadChatHistory() {
+        if (!supabaseClient) return;
+        const { data, error } = await supabaseClient
+            .from('chat_messages')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(20);
+            
+        if (!error && data) {
+            data.reverse().forEach(msg => renderChatMessage(msg));
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+
+    function setupRealtimeChat() {
+        if (!supabaseClient) return;
+        
+        // 이전 구독이 있다면 취소
+        if (chatSubscription) supabaseClient.removeChannel(chatSubscription);
+
+        chatSubscription = supabaseClient.channel('public:chat_messages')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
+                renderChatMessage(payload.new);
+            })
+            .subscribe();
+            
+        loadChatHistory();
+    }
+
+    async function sendChatMessage() {
+        const text = chatInput.value.trim();
+        if (!text || !supabaseClient || !currentSession) return;
+        
+        chatInput.value = '';
+        
+        const { error } = await supabaseClient
+            .from('chat_messages')
+            .insert([{
+                user_id: currentSession.user.id,
+                email: currentSession.user.email,
+                message: text
+            }]);
+            
+        if (error) {
+            console.error('Chat Send Error:', error);
+            alert('메시지 전송에 실패했습니다.');
+        }
+    }
+
+    btnChatSend.addEventListener('click', sendChatMessage);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendChatMessage();
+    });
+    // --- 실시간 채팅 로직 끝 ---
+
 });

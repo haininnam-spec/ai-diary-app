@@ -61,8 +61,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('btn-google-login').addEventListener('click', async () => {
-        const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google' });
-        if (error) alert('구글 로그인 실패: ' + error.message);
+        try {
+            const { data, error } = await supabaseClient.auth.signInWithOAuth({ 
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin
+                }
+            });
+            if (error) {
+                console.error('구글 로그인 에러:', error);
+                alert('구글 로그인 실패: ' + error.message);
+            }
+        } catch (err) {
+            console.error('구글 로그인 예외 발생:', err);
+            alert('구글 로그인 중 오류가 발생했습니다.');
+        }
     });
 
     document.getElementById('btn-logout').addEventListener('click', async () => {

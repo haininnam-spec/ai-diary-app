@@ -1,1 +1,1 @@
-{"name":"ai-diary","version":"1.0.0","type":"commonjs","dependencies":{"@google/generative-ai":"^0.24.1","@supabase/supabase-js":"^2.107.0","dotenv":"^17.4.2","express":"^5.2.1","ioredis":"^5.11.1"}}
+{"name":"ai-diary","version":"1.0.0","type":"commonjs","scripts":{"dev":"node local-server.js"},"dependencies":{"@google/generative-ai":"^0.24.1","@supabase/supabase-js":"^2.107.0","dotenv":"^17.4.2","express":"^5.2.1","ioredis":"^5.11.1"}}

@@ -41,6 +41,17 @@ app.get('/api/history', async (req, res) => {
     }
 });
 
+app.get('/api/config', async (req, res) => {
+    try {
+        const configHandler = require('./api/config.js');
+        await configHandler(req, res);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: '로컬 서버 에러' });
+    }
+});
+
+
 app.listen(port, () => {
     console.log(`Local development server running at http://localhost:${port}`);
 });

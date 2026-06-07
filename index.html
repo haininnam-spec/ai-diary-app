@@ -66,6 +66,14 @@
         <!-- 실시간 채팅 섹션 추가 -->
         <section class="chat-section" id="chat-section">
             <h2>실시간 채팅</h2>
+            
+            <!-- 프로필 섹션 -->
+            <div class="profile-section">
+                <img src="default-avatar.png" alt="Profile" id="profile-image" class="profile-image" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23ccc\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'">
+                <button class="btn-text" id="btn-change-photo">사진 변경</button>
+                <input type="file" id="file-upload" accept="image/*" style="display: none;">
+            </div>
+
             <div class="chat-container">
                 <div class="chat-messages" id="chat-messages">
                     <!-- 메시지들이 여기에 렌더링됩니다. -->

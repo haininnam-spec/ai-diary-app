@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('app-container').style.display = 'block';
                         fetchHistory();
                         setupRealtimeChat();
+                        loadUserProfile();
                     } else {
                         document.getElementById('login-container').style.display = 'block';
                         document.getElementById('app-container').style.display = 'none';
@@ -243,6 +244,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- 프로필 사진 로직 ---
+    const profileImage = document.getElementById('profile-image');
+    const btnChangePhoto = document.getElementById('btn-change-photo');
+    const fileUpload = document.getElementById('file-upload');
+
+    function loadUserProfile() {
+        if (currentSession && currentSession.user.user_metadata?.avatar_url) {
+            const url = currentSession.user.user_metadata.avatar_url;
+            profileImage.src = url + '?t=' + new Date().getTime(); 
+            updateChatAvatars(url);
+        }
+    }
+
+    function updateChatAvatars(url) {
+        document.querySelectorAll('.chat-message-wrapper.me .chat-avatar').forEach(img => {
+            img.src = url;
+        });
+    }
+
+    if(profileImage && fileUpload && btnChangePhoto) {
+        profileImage.addEventListener('click', () => fileUpload.click());
+        btnChangePhoto.addEventListener('click', () => fileUpload.click());
+
+        fileUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file || !supabaseClient || !currentSession) return;
+            
+            const userId = currentSession.user.id;
+            const filePath = `${userId}/avatars.png`;
+            
+            try {
+                // 1. Storage 업로드
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('avatars')
+                    .upload(filePath, file, { upsert: true });
+                    
+                if (uploadError) throw uploadError;
+                
+                // 2. Public URL 가져오기
+                const { data } = supabaseClient.storage.from('avatars').getPublicUrl(filePath);
+                const publicUrl = data.publicUrl;
+                
+                // 3. Auth 메타데이터 업데이트
+                const { error: updateError } = await supabaseClient.auth.updateUser({
+                    data: { avatar_url: publicUrl }
+                });
+                
+                if (updateError) throw updateError;
+                
+                // 4. UI 즉시 업데이트 (캐시 방지 파라미터 추가)
+                const freshUrl = publicUrl + '?t=' + new Date().getTime();
+                profileImage.src = freshUrl;
+                updateChatAvatars(freshUrl);
+                
+                alert('프로필 사진이 변경되었습니다!');
+            } catch (err) {
+                console.error('Upload Error:', err);
+                alert('사진 업로드 실패: ' + err.message);
+            }
+        });
+    }
+
     // --- 실시간 채팅 로직 시작 ---
     const chatInput = document.getElementById('chat-input');
     const btnChatSend = document.getElementById('btn-chat-send');
@@ -251,6 +314,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderChatMessage(msg, isHistory = false) {
         const isMe = currentSession && currentSession.user.email === msg.user_email;
+        const wrapper = document.createElement('div');
+        wrapper.className = `chat-message-wrapper ${isMe ? 'me' : 'other'}`;
+        
+        // 아바타 이미지 설정
+        let avatarUrl = 'default-avatar.png';
+        if (isMe && currentSession.user.user_metadata?.avatar_url) {
+            avatarUrl = currentSession.user.user_metadata.avatar_url;
+        }
+        
+        const img = document.createElement('img');
+        img.src = avatarUrl;
+        img.className = 'chat-avatar';
+        img.onerror = () => { img.src = 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23ccc\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'; };
+        
         const div = document.createElement('div');
         div.className = `chat-message ${isMe ? 'me' : 'other'}`;
         
@@ -260,16 +337,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         div.innerHTML = `${senderHtml}${msg.content}`;
         
+        wrapper.appendChild(img);
+        wrapper.appendChild(div);
+        
         if (isHistory) {
             // 과거 메시지는 맨 앞에 추가
             const firstChild = chatMessages.children[1]; // system message is [0]
             if (firstChild) {
-                chatMessages.insertBefore(div, firstChild);
+                chatMessages.insertBefore(wrapper, firstChild);
             } else {
-                chatMessages.appendChild(div);
+                chatMessages.appendChild(wrapper);
             }
         } else {
-            chatMessages.appendChild(div);
+            chatMessages.appendChild(wrapper);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }

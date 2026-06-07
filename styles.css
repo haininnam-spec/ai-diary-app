@@ -395,6 +395,57 @@ textarea::placeholder {
     font-size: 1.4rem;
 }
 
+/* Profile Section */
+.profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.profile-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(141, 164, 126, 0.5);
+    background-color: #f1f3f5;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.profile-section .btn-text {
+    margin-top: 8px;
+    font-size: 0.9rem;
+}
+
+/* Chat Message Avatar Update */
+.chat-message-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    animation: fadeIn 0.3s ease;
+}
+
+.chat-message-wrapper.me {
+    flex-direction: row-reverse;
+}
+
+.chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #e9ecef;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
 .chat-container {
     background-color: rgba(255, 255, 255, 0.7);
     border: 1px solid rgba(141, 164, 126, 0.3);

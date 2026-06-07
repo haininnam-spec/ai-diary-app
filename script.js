@@ -250,15 +250,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let chatSubscription = null;
 
     function renderChatMessage(msg, isHistory = false) {
-        const isMe = currentSession && currentSession.user.id === msg.user_id;
+        const isMe = currentSession && currentSession.user.email === msg.user_email;
         const div = document.createElement('div');
         div.className = `chat-message ${isMe ? 'me' : 'other'}`;
         
         // 익명 처리 (이메일 앞자리 활용)
-        const emailPrefix = msg.email ? msg.email.split('@')[0] : '익명';
+        const emailPrefix = msg.user_email ? msg.user_email.split('@')[0] : '익명';
         const senderHtml = isMe ? '' : `<span class="sender">${emailPrefix}</span>`;
         
-        div.innerHTML = `${senderHtml}${msg.message}`;
+        div.innerHTML = `${senderHtml}${msg.content}`;
         
         if (isHistory) {
             // 과거 메시지는 맨 앞에 추가
@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadChatHistory() {
         if (!supabaseClient) return;
         const { data, error } = await supabaseClient
-            .from('chat_messages')
+            .from('messages')
             .select('*')
             .order('created_at', { ascending: false })
             .limit(20);
@@ -294,8 +294,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 이전 구독이 있다면 취소
         if (chatSubscription) supabaseClient.removeChannel(chatSubscription);
 
-        chatSubscription = supabaseClient.channel('public:chat_messages')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
+        chatSubscription = supabaseClient.channel('public:messages')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                 renderChatMessage(payload.new);
             })
             .subscribe();
@@ -310,11 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.value = '';
         
         const { error } = await supabaseClient
-            .from('chat_messages')
+            .from('messages')
             .insert([{
-                user_id: currentSession.user.id,
-                email: currentSession.user.email,
-                message: text
+                content: text,
+                user_email: currentSession.user.email
             }]);
             
         if (error) {

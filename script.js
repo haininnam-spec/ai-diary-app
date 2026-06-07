@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
         if (error) {
             console.error('Chat Send Error:', error);
-            alert('메시지 전송에 실패했습니다.');
+            alert('메시지 전송 실패 상세 에러: ' + JSON.stringify(error, null, 2));
         }
     }
 
